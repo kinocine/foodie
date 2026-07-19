@@ -21,6 +21,11 @@
     input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 10px; box-sizing: border-box; margin-bottom: 12px; font-size: 15px; background: #fff; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-color); }
     
+    /* 위치 및 지역 셀렉트 가로 정렬 */
+    .location-row { display: flex; gap: 8px; margin-bottom: 0; }
+    .location-row input { flex: 2; }
+    .location-row select { flex: 1; }
+
     .btn { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 15px; margin-top: 5px; transition: background 0.2s; }
     .btn:active { opacity: 0.9; }
     
@@ -28,18 +33,25 @@
     .tab-btn { flex: 1; padding: 10px; background: #e5e5ea; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
     .tab-btn.active { background: var(--primary-color); color: white; }
     
-    .sort-container { display: flex; justify-content: flex-end; gap: 5px; margin-bottom: 15px; }
+    .sort-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .sort-btn { padding: 6px 12px; background: #fff; border: 1px solid #d2d2d7; border-radius: 20px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
     
+    /* 데이터 백업/복원 관리 존 */
+    .db-management { display: flex; align-items: center; gap: 8px; }
+    .db-btn { padding: 6px 10px; background: #8e8e93; color: white; border: none; border-radius: 20px; font-size: 12px; cursor: pointer; text-decoration: none; font-weight: 500; }
+    .file-label { padding: 5px 10px; background: #636366; color: white; border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 500; }
+
     .record-card { background: var(--card-bg); padding: 18px; margin-bottom: 16px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5ea; }
-    .card-header h3 { margin: 0 0 6px 0; font-size: 18px; font-weight: 700; }
-    .card-header .address { font-size: 13px; color: var(--text-sub); font-weight: normal; display: block; margin-top: 2px; }
+    .card-header h3 { margin: 0 0 8px 0; font-size: 18px; font-weight: 700; }
+    .card-header .address { font-size: 13px; color: var(--text-sub); font-weight: normal; display: block; margin-top: 4px; }
+    .card-header .region-tag { color: var(--primary-color); font-weight: 600; }
     
-    .card-meta { font-size: 14px; color: #333; margin-bottom: 10px; line-height: 1.4; border-bottom: 1px dashed #e5e5ea; padding-bottom: 10px; }
+    .card-meta { font-size: 14px; color: #333; margin-bottom: 10px; line-height: 1.5; border-bottom: 1px dashed #e5e5ea; padding-bottom: 10px; }
     .rating-stars { color: #ffcc00; font-weight: bold; }
     
     .image-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
-    .gallery-img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; }
+    .gallery-img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
+    .gallery-img:hover { transform: scale(1.02); }
     
     .map-links { display: flex; gap: 8px; margin: 12px 0; }
     .map-link { flex: 1; text-align: center; padding: 6px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 500; }
@@ -55,6 +67,10 @@
     .preview-box { position: relative; width: 100%; height: 70px; }
     .preview-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
     .preview-box .remove-btn { position: absolute; top: -4px; right: -4px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+    /* 이미지 확대를 위한 라이트박스 모달 스타일 */
+    .lightbox-modal { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; cursor: zoom-out; }
+    .lightbox-modal img { max-width: 95%; max-height: 90%; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
   </style>
 </head>
 <body>
@@ -64,9 +80,9 @@
   <div id="mainView" class="view active">
     <h1>맛집 탐방 <span style="font-size:16px; font-weight:normal; color:var(--text-sub);">foodie</span></h1>
     
-    <input type="text" id="searchInput" placeholder="🔍 식당 또는 메뉴 검색" oninput="renderList()">
+    <input type="text" id="searchInput" placeholder="🔍 식당, 위치 또는 메뉴 검색" oninput="renderList()">
     
-    <button class="btn" onclick="showView('formView')" style="margin-bottom: 15px;">+ 새 기록 추가</button>
+    <button class="btn" onclick="showView('formView')" style="margin-bottom: 15px;">+ 새 맛집 추가</button>
     
     <!-- 가본 곳 / 가볼 곳 필터 탭 -->
     <div class="filter-tabs">
@@ -74,11 +90,16 @@
       <button id="tabToVisit" class="tab-btn" onclick="setFilter('toVisit')">가볼 곳</button>
     </div>
     
-    <!-- 별점순 정렬 버튼 토글 (▽: 높은순, △: 낮은순) -->
+    <!-- 정렬 및 데이터 관리 상단 바 -->
     <div class="sort-container">
       <button class="sort-btn" onclick="toggleSort()">
         별점순 <span id="sortDirection">▽</span>
       </button>
+      <div class="db-management">
+        <button class="db-btn" onclick="downloadDB()">DB 백업</button>
+        <label for="restoreFile" class="file-label">복원하기</label>
+        <input type="file" id="restoreFile" accept=".json" onchange="restoreDB(this)" style="display:none;">
+      </div>
     </div>
     
     <div id="listContainer"></div>
@@ -91,8 +112,22 @@
       <input type="hidden" id="editIndex" value="-1">
       
       <input type="text" id="restaurantName" placeholder="식당이름" required>
-      <input type="text" id="address" placeholder="주소" required>
-      <input type="text" id="menu" placeholder="메뉴명" required>
+      
+      <!-- 위치 및 지역권 선택 결합 -->
+      <div class="location-row">
+        <input type="text" id="address" placeholder="위치 (예: 상암mbc몰)" required>
+        <select id="region">
+          <option value="서울권">서울권</option>
+          <option value="경기권">경기권</option>
+          <option value="충청권">충청권</option>
+          <option value="전라권">전라권</option>
+          <option value="부산경상">부산경상</option>
+          <option value="강원">강원</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      
+      <input type="text" id="menu" placeholder="메뉴명 (여러 개일 경우 쉼표로 구분)" required>
       
       <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">방문 상태</label>
       <select id="status" onchange="toggleFormByStatus()">
@@ -100,17 +135,26 @@
         <option value="toVisit">가볼 곳</option>
       </select>
       
-      <!-- '가본 곳' 일 때만 표시되는 상세 영역 -->
+      <!-- '가본 곳' 선택 시 노출 영역 -->
       <div id="visitedFields">
-        <input type="date" id="visitDate">
-        <select id="rating">
+        <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">별점 및 방문일자</label>
+        <select id="rating" style="margin-bottom:12px;">
           <option value="5">★★★★★ (5점)</option>
           <option value="4">★★★★☆ (4점)</option>
           <option value="3">★★★☆☆ (3점)</option>
           <option value="2">★★☆☆☆ (2점)</option>
           <option value="1">★☆☆☆☆ (1점)</option>
         </select>
-        <textarea id="comment" placeholder="평가 (맛, 서비스, 분위기 등)" rows="3"></textarea>
+        <input type="date" id="visitDate">
+        
+        <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">평가</label>
+        <select id="commentSelect">
+          <option value="대만족">대만족</option>
+          <option value="만족">만족</option>
+          <option value="평범">평범</option>
+          <option value="그럭저럭">그럭저럭</option>
+          <option value="절대비추">절대비추</option>
+        </select>
       </div>
       
       <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">지도 앱 링크 (선택)</label>
@@ -128,6 +172,11 @@
   </div>
 </div>
 
+<!-- 이미지 클릭 확대용 라이트박스 모달 레이아웃 -->
+<div id="lightbox" class="lightbox-modal" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="확대 보기">
+</div>
+
 <script>
   let records = JSON.parse(localStorage.getItem('foodieRecords')) || [];
   let currentImages = [];
@@ -143,11 +192,11 @@
       document.getElementById('previewGallery').innerHTML = '';
       currentImages = [];
       document.getElementById('formTitle').innerText = "새 맛집 기록";
+      document.getElementById('visitDate').valueAsDate = new Date();
       toggleFormByStatus();
     }
   }
 
-  // 가본 곳 / 가볼 곳 선택에 따라 폼 양식 스위칭
   function toggleFormByStatus() {
     const status = document.getElementById('status').value;
     const visitedFields = document.getElementById('visitedFields');
@@ -167,7 +216,62 @@
     renderList();
   }
 
-  // 다중 이미지 리사이징 가공 처리
+  // 이미지 팝업 열기 / 닫기 함수
+  function openLightbox(src) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    lightboxImg.src = src;
+    lightbox.style.display = 'flex';
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+  }
+
+  // 데이터 백업 기능 (파일 다운로드)
+  function downloadDB() {
+    if(records.length === 0) {
+      alert('백업할 데이터가 없습니다.');
+      return;
+    }
+    const dataStr = JSON.stringify(records, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const dataLink = document.createElement('a');
+    dataLink.href = url;
+    dataLink.download = `foodie_backup_${new Date().toISOString().slice(0,10)}.json`;
+    dataLink.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // 데이터 복원 기능 (파일 읽어서 기기에 저장하기)
+  function restoreDB(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (Array.isArray(importedData)) {
+          if(confirm('기존의 맛집 데이터를 덮어쓰고 파일의 데이터로 복원하시겠습니까?')) {
+            records = importedData;
+            localStorage.setItem('foodieRecords', JSON.stringify(records));
+            renderList();
+            alert('성공적으로 데이터를 복원했습니다.');
+          }
+        } else {
+          alert('올바른 파일 형식이 아닙니다.');
+        }
+      } catch (err) {
+        alert('파일을 읽는 중 에러가 발생했습니다.');
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
   function processImages(input) {
     const files = input.files;
     if (!files.length) return;
@@ -178,7 +282,7 @@
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 500; // 모바일/웹 저장용 최적화 크기
+          const MAX_WIDTH = 500; 
           canvas.width = MAX_WIDTH;
           canvas.height = (img.height * MAX_WIDTH) / img.width;
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -220,11 +324,12 @@
     const data = {
       name: document.getElementById('restaurantName').value,
       address: document.getElementById('address').value,
+      region: document.getElementById('region').value,
       menu: document.getElementById('menu').value,
       status: status,
       date: status === 'visited' ? document.getElementById('visitDate').value : '',
       rating: status === 'visited' ? parseInt(document.getElementById('rating').value) : 0,
-      comment: status === 'visited' ? document.getElementById('comment').value : '',
+      comment: status === 'visited' ? document.getElementById('commentSelect').value : '',
       maps: {
         naver: document.getElementById('naverMap').value,
         kakao: document.getElementById('kakaoMap').value,
@@ -249,18 +354,19 @@
     const list = document.getElementById('listContainer');
     list.innerHTML = '';
     
-    // 원본배열 유지를 위해 매핑 객체 생성
     let indexedRecords = records.map((item, originalIndex) => ({ ...item, originalIndex }));
     
-    // 1. 상태값(가본 곳/가볼 곳) 필터링
     let filtered = indexedRecords.filter(item => item.status === currentFilter);
     
-    // 2. 통합 검색 기능
     if(query) {
-      filtered = filtered.filter(item => item.name.toLowerCase().includes(query) || item.menu.toLowerCase().includes(query));
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(query) || 
+        item.menu.toLowerCase().includes(query) ||
+        item.address.toLowerCase().includes(query) ||
+        (item.region && item.region.toLowerCase().includes(query))
+      );
     }
     
-    // 3. 정렬 처리 (가본 곳의 별점순 토글)
     if(currentFilter === 'visited') {
       filtered.sort((a, b) => currentSortOrder === 'desc' ? b.rating - a.rating : a.rating - b.rating);
     }
@@ -272,25 +378,26 @@
 
     filtered.forEach((item) => {
       let stars = '★'.repeat(item.rating) + '☆'.repeat(5 - item.rating);
+      let regionInfo = item.region ? ` [${item.region}]` : '';
+      
       let metaLine = item.status === 'visited' 
-        ? `메뉴: ${item.menu} | <span class="rating-stars">${stars}</span> | 방문일: ${item.date}`
-        : `추천 메뉴: ${item.menu}`;
+        ? `<span class="rating-stars">${stars}</span> | 방문일: ${item.date}`
+        : `가볼 곳 예약`;
         
       let commentSection = item.status === 'visited' && item.comment
-        ? `<p style="font-size:14px; margin:10px 0; color:#333; white-space:pre-wrap;"><strong>평가:</strong> ${item.comment}</p>`
+        ? `<p style="font-size:14px; margin:10px 0; color:#333;"><strong>평가:</strong> ${item.comment}</p>`
         : '';
         
-      // 다중 이미지 레이아웃 갤러리 구현
       let galleryHtml = '';
       if(item.images && item.images.length > 0) {
         galleryHtml = '<div class="image-gallery">';
         item.images.forEach(imgData => {
-          galleryHtml += `<img src="${imgData}" class="gallery-img">`;
+          // 클릭 이벤트를 추가하여 크게 볼 수 있도록 유도
+          galleryHtml += `<img src="${imgData}" class="gallery-img" onclick="openLightbox('${imgData}')">`;
         });
         galleryHtml += '</div>';
       }
       
-      // 개별 플랫폼 지도 앱 바로가기 링크 생성
       let mapHtml = '';
       if(item.maps && (item.maps.naver || item.maps.kakao || item.maps.google)) {
         mapHtml = '<div class="map-links">';
@@ -303,10 +410,11 @@
       list.innerHTML += `
         <div class="record-card">
           <div class="card-header">
-            <h3>${item.name} <span class="address">📍 ${item.address}</span></h3>
+            <h3>${item.name} <span class="address">📍 ${item.address}<span class="region-tag">${regionInfo}</span></span></h3>
           </div>
           <div class="card-meta">
-            ${metaLine}
+            ${metaLine}<br>
+            <span style="display:inline-block; margin-top:4px;"><strong>메뉴:</strong> ${item.menu}</span>
           </div>
           ${commentSection}
           ${galleryHtml}
@@ -325,6 +433,7 @@
     document.getElementById('editIndex').value = index;
     document.getElementById('restaurantName').value = item.name;
     document.getElementById('address').value = item.address;
+    document.getElementById('region').value = item.region || '서울권';
     document.getElementById('menu').value = item.menu;
     document.getElementById('status').value = item.status;
     
@@ -333,7 +442,7 @@
     if(item.status === 'visited') {
       document.getElementById('visitDate').value = item.date;
       document.getElementById('rating').value = item.rating;
-      document.getElementById('comment').value = item.comment;
+      document.getElementById('commentSelect').value = item.comment || '평범';
     }
     
     document.getElementById('naverMap').value = item.maps?.naver || '';
