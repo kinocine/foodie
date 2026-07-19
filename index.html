@@ -125,10 +125,11 @@
       
       <input type="text" id="restaurantName" placeholder="식당이름" required>
       
-      <!-- 위치 및 지역권 선택 결합 -->
+      <!-- 위치 및 지역권 선택 결합 (평촌을 제일 앞으로 추가 배치) -->
       <div class="location-row">
         <input type="text" id="address" placeholder="위치 (예: 상암mbc몰)" required>
         <select id="region">
+          <option value="평촌">평촌</option>
           <option value="서울권">서울권</option>
           <option value="경기권">경기권</option>
           <option value="충청권">충청권</option>
@@ -147,7 +148,7 @@
         <option value="toVisit">가볼 곳</option>
       </select>
       
-      <!-- '가본 곳' 선택 시 노출 영역 (기존의 별점 평점 드롭다운 삭제 완료) -->
+      <!-- '가본 곳' 선택 시 노출 영역 -->
       <div id="visitedFields">
         <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">방문일자</label>
         <input type="date" id="visitDate">
@@ -216,7 +217,6 @@
     renderList();
   }
 
-  // 특정 지역권 태그를 눌렀을 때 실행되는 필터링 제어 함수
   function filterByRegion(regionName) {
     selectedRegion = regionName;
     const indicator = document.getElementById('regionIndicator');
@@ -227,7 +227,6 @@
     renderList();
   }
 
-  // 지역 필터를 풀고 전체 리스트로 복귀하는 함수
   function clearRegionFilter() {
     selectedRegion = '';
     document.getElementById('regionIndicator').style.display = 'none';
@@ -240,22 +239,43 @@
     renderList();
   }
 
+  // 라이트박스 전용 팝업 뒤로가기 제어 감지 기능 포함 열기
   function openLightbox(src) {
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
     lightboxImg.src = src;
     lightbox.style.display = 'flex';
+    
+    // 뒤로가기 제어를 위해 브라우저 가상 히스토리 상태를 하나 push합니다.
+    window.history.pushState({ lightbox: "open" }, "");
   }
 
-  document.getElementById('lightbox').onclick = function(e) {
-    if(e.target.id === 'lightbox' || e.target.id === 'lightboxImg') {
-      this.style.display = 'none';
+  // 라이트박스 닫기 (이벤트 및 수동)
+  function closeLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    if (lightbox.style.display === 'flex') {
+      lightbox.style.display = 'none';
+      // 만약 사용자가 화면 내 클릭으로 직접 닫았다면 쌓인 뒤로가기 state를 맞춤 제거합니다.
+      if (window.history.state && window.history.state.lightbox === "open") {
+        window.history.back();
+      }
+    }
+  }
+
+  // 사용자가 기기 '뒤로가기' 버튼을 눌렀을 때의 브라우저 이벤트 감지 처리
+  window.onpopstate = function(event) {
+    const lightbox = document.getElementById('lightbox');
+    // 모달창이 켜진 상태에서 뒤로가기가 발생한 것이라면, 페이지 이동을 막고 모달만 숨김 처리합니다.
+    if (lightbox.style.display === 'flex') {
+      lightbox.style.display = 'none';
     }
   };
 
-  function closeLightbox() {
-    document.getElementById('lightbox').style.display = 'none';
-  }
+  document.getElementById('lightbox').onclick = function(e) {
+    if(e.target.id === 'lightbox' || e.target.id === 'lightboxImg') {
+      closeLightbox();
+    }
+  };
 
   function downloadDB() {
     if(records.length === 0) {
@@ -383,15 +403,12 @@
     
     let indexedRecords = records.map((item, originalIndex) => ({ ...item, originalIndex }));
     
-    // 1. 상태 필터링 (가본 곳 / 가볼 곳)
     let filtered = indexedRecords.filter(item => item.status === currentFilter);
     
-    // 2. 권역별 태그 필터링 조건 추가 (태그를 누른 이력이 있을 때 작동)
     if(selectedRegion) {
       filtered = filtered.filter(item => item.region === selectedRegion);
     }
 
-    // 3. 통합 검색 처리
     if(query) {
       filtered = filtered.filter(item => 
         item.name.toLowerCase().includes(query) || 
@@ -401,7 +418,6 @@
       );
     }
     
-    // 4. 최신/과거 날짜 기준 혹은 가나다 정렬 (요구 사항에 따른 배열 배치 순서 스위칭)
     filtered.sort((a, b) => {
       if(currentFilter === 'visited') {
         return currentSortOrder === 'desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date);
@@ -418,7 +434,6 @@
     filtered.forEach((item) => {
       let regionText = item.region ? item.region : '미지정';
       
-      // 메타 구조 변경: 별점을 빼고 방문 일자 및 평가 정보를 깔끔하게 결합
       let metaLine = item.status === 'visited' 
         ? `<strong>평가:</strong> <span style="color:var(--primary-color); font-weight:700;">${item.comment || '평범'}</span> | <strong>방문일:</strong> ${item.date}`
         : `가볼 곳 예약`;
@@ -441,7 +456,6 @@
         mapHtml += '</div>';
       }
 
-      // 📍 위치 옆에 [권역 태그]를 버튼 스타일로 감싸서 클릭하면 filterByRegion() 함수가 구동되도록 설계
       list.innerHTML += `
         <div class="record-card">
           <div class="card-header">
@@ -471,7 +485,7 @@
     document.getElementById('editIndex').value = index;
     document.getElementById('restaurantName').value = item.name;
     document.getElementById('address').value = item.address;
-    document.getElementById('region').value = item.region || '서울권';
+    document.getElementById('region').value = item.region || '평촌';
     document.getElementById('menu').value = item.menu;
     document.getElementById('status').value = item.status;
     
