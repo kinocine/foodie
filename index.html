@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>맛집 탐방</title>
+  <style>
+    :root { 
+      --primary-color: #ff9500; 
+      --bg-color: #f5f5f7; 
+      --card-bg: #ffffff; 
+      --text-main: #1d1d1f;
+      --text-sub: #86868b;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); padding: 15px; margin: 0; }
+    .container { max-width: 500px; margin: 0 auto; }
+    .view { display: none; }
+    .active { display: block; }
+    
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; text-align: center; color: var(--primary-color); }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 10px; box-sizing: border-box; margin-bottom: 12px; font-size: 15px; background: #fff; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-color); }
+    
+    .btn { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 15px; margin-top: 5px; transition: background 0.2s; }
+    .btn:active { opacity: 0.9; }
+    
+    .filter-tabs { display: flex; gap: 8px; margin-bottom: 15px; }
+    .tab-btn { flex: 1; padding: 10px; background: #e5e5ea; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .tab-btn.active { background: var(--primary-color); color: white; }
+    
+    .sort-container { display: flex; justify-content: flex-end; gap: 5px; margin-bottom: 15px; }
+    .sort-btn { padding: 6px 12px; background: #fff; border: 1px solid #d2d2d7; border-radius: 20px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    
+    .record-card { background: var(--card-bg); padding: 18px; margin-bottom: 16px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5ea; }
+    .card-header h3 { margin: 0 0 6px 0; font-size: 18px; font-weight: 700; }
+    .card-header .address { font-size: 13px; color: var(--text-sub); font-weight: normal; display: block; margin-top: 2px; }
+    
+    .card-meta { font-size: 14px; color: #333; margin-bottom: 10px; line-height: 1.4; border-bottom: 1px dashed #e5e5ea; padding-bottom: 10px; }
+    .rating-stars { color: #ffcc00; font-weight: bold; }
+    
+    .image-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
+    .gallery-img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; }
+    
+    .map-links { display: flex; gap: 8px; margin: 12px 0; }
+    .map-link { flex: 1; text-align: center; padding: 6px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 500; }
+    .map-link.naver { background: #03C75A; color: white; }
+    .map-link.kakao { background: #FEE500; color: #191919; }
+    .map-link.google { background: #4285F4; color: white; }
+    
+    .card-actions { text-align: right; margin-top: 10px; padding-top: 8px; border-top: 1px solid #f2f2f7; }
+    .card-actions button { background: none; border: none; color: #007aff; font-size: 13px; cursor: pointer; margin-left: 10px; font-weight: 500; }
+    .card-actions button.delete { color: #ff3b30; }
+    
+    .preview-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .preview-box { position: relative; width: 100%; height: 70px; }
+    .preview-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+    .preview-box .remove-btn { position: absolute; top: -4px; right: -4px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 메인 리스트 화면 -->
+  <div id="mainView" class="view active">
+    <h1>맛집 탐방 <span style="font-size:16px; font-weight:normal; color:var(--text-sub);">foodie</span></h1>
+    
+    <input type="text" id="searchInput" placeholder="🔍 식당 또는 메뉴 검색" oninput="renderList()">
+    
+    <button class="btn" onclick="showView('formView')" style="margin-bottom: 15px;">+ 새 기록 추가</button>
+    
+    <!-- 가본 곳 / 가볼 곳 필터 탭 -->
+    <div class="filter-tabs">
+      <button id="tabVisited" class="tab-btn active" onclick="setFilter('visited')">가본 곳</button>
+      <button id="tabToVisit" class="tab-btn" onclick="setFilter('toVisit')">가볼 곳</button>
+    </div>
+    
+    <!-- 별점순 정렬 버튼 토글 (▽: 높은순, △: 낮은순) -->
+    <div class="sort-container">
+      <button class="sort-btn" onclick="toggleSort()">
+        별점순 <span id="sortDirection">▽</span>
+      </button>
+    </div>
+    
+    <div id="listContainer"></div>
+  </div>
+
+  <!-- 입력/수정 폼 화면 -->
+  <div id="formView" class="view">
+    <h2 id="formTitle">새 맛집 기록</h2>
+    <form id="recordForm">
+      <input type="hidden" id="editIndex" value="-1">
+      
+      <input type="text" id="restaurantName" placeholder="식당이름" required>
+      <input type="text" id="address" placeholder="주소" required>
+      <input type="text" id="menu" placeholder="메뉴명" required>
+      
+      <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">방문 상태</label>
+      <select id="status" onchange="toggleFormByStatus()">
+        <option value="visited">가본 곳</option>
+        <option value="toVisit">가볼 곳</option>
+      </select>
+      
+      <!-- '가본 곳' 일 때만 표시되는 상세 영역 -->
+      <div id="visitedFields">
+        <input type="date" id="visitDate">
+        <select id="rating">
+          <option value="5">★★★★★ (5점)</option>
+          <option value="4">★★★★☆ (4점)</option>
+          <option value="3">★★★☆☆ (3점)</option>
+          <option value="2">★★☆☆☆ (2점)</option>
+          <option value="1">★☆☆☆☆ (1점)</option>
+        </select>
+        <textarea id="comment" placeholder="평가 (맛, 서비스, 분위기 등)" rows="3"></textarea>
+      </div>
+      
+      <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">지도 앱 링크 (선택)</label>
+      <input type="url" id="naverMap" placeholder="네이버 지도 공유 링크">
+      <input type="url" id="kakaoMap" placeholder="카카오맵 공유 링크">
+      <input type="url" id="googleMap" placeholder="구글 지도 공유 링크">
+      
+      <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">사진 첨부 (다중 선택 가능)</label>
+      <input type="file" id="imageInput" accept="image/*" multiple onchange="processImages(this)">
+      <div id="previewGallery" class="preview-gallery"></div>
+      
+      <button type="submit" class="btn">저장</button>
+      <button type="button" class="btn" style="background:#8e8e93" onclick="showView('mainView')">취소</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  let records = JSON.parse(localStorage.getItem('foodieRecords')) || [];
+  let currentImages = [];
+  let currentFilter = 'visited'; 
+  let currentSortOrder = 'desc'; 
+
+  function showView(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    if(viewId === 'mainView') {
+      document.getElementById('recordForm').reset();
+      document.getElementById('editIndex').value = "-1";
+      document.getElementById('previewGallery').innerHTML = '';
+      currentImages = [];
+      document.getElementById('formTitle').innerText = "새 맛집 기록";
+      toggleFormByStatus();
+    }
+  }
+
+  // 가본 곳 / 가볼 곳 선택에 따라 폼 양식 스위칭
+  function toggleFormByStatus() {
+    const status = document.getElementById('status').value;
+    const visitedFields = document.getElementById('visitedFields');
+    visitedFields.style.display = (status === 'toVisit') ? 'none' : 'block';
+  }
+
+  function setFilter(filterType) {
+    currentFilter = filterType;
+    document.getElementById('tabVisited').classList.toggle('active', filterType === 'visited');
+    document.getElementById('tabToVisit').classList.toggle('active', filterType === 'toVisit');
+    renderList();
+  }
+
+  function toggleSort() {
+    currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
+    document.getElementById('sortDirection').innerText = currentSortOrder === 'desc' ? '▽' : '△';
+    renderList();
+  }
+
+  // 다중 이미지 리사이징 가공 처리
+  function processImages(input) {
+    const files = input.files;
+    if (!files.length) return;
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 500; // 모바일/웹 저장용 최적화 크기
+          canvas.width = MAX_WIDTH;
+          canvas.height = (img.height * MAX_WIDTH) / img.width;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          const base64Data = canvas.toDataURL('image/jpeg', 0.7);
+          currentImages.push(base64Data);
+          renderPreviews();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = ""; 
+  }
+
+  function renderPreviews() {
+    const gallery = document.getElementById('previewGallery');
+    gallery.innerHTML = '';
+    currentImages.forEach((imgSrc, idx) => {
+      gallery.innerHTML += `
+        <div class="preview-box">
+          <img src="${imgSrc}">
+          <button type="button" class="remove-btn" onclick="removeImage(${idx})">×</button>
+        </div>
+      `;
+    });
+  }
+
+  function removeImage(idx) {
+    currentImages.splice(idx, 1);
+    renderPreviews();
+  }
+
+  document.getElementById('recordForm').onsubmit = function(e) {
+    e.preventDefault();
+    const idx = parseInt(document.getElementById('editIndex').value);
+    const status = document.getElementById('status').value;
+    
+    const data = {
+      name: document.getElementById('restaurantName').value,
+      address: document.getElementById('address').value,
+      menu: document.getElementById('menu').value,
+      status: status,
+      date: status === 'visited' ? document.getElementById('visitDate').value : '',
+      rating: status === 'visited' ? parseInt(document.getElementById('rating').value) : 0,
+      comment: status === 'visited' ? document.getElementById('comment').value : '',
+      maps: {
+        naver: document.getElementById('naverMap').value,
+        kakao: document.getElementById('kakaoMap').value,
+        google: document.getElementById('googleMap').value
+      },
+      images: [...currentImages]
+    };
+    
+    if (idx === -1) {
+      records.push(data);
+    } else {
+      records[idx] = data;
+    }
+    
+    localStorage.setItem('foodieRecords', JSON.stringify(records));
+    setFilter(status);
+    showView('mainView');
+  };
+
+  function renderList() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const list = document.getElementById('listContainer');
+    list.innerHTML = '';
+    
+    // 원본배열 유지를 위해 매핑 객체 생성
+    let indexedRecords = records.map((item, originalIndex) => ({ ...item, originalIndex }));
+    
+    // 1. 상태값(가본 곳/가볼 곳) 필터링
+    let filtered = indexedRecords.filter(item => item.status === currentFilter);
+    
+    // 2. 통합 검색 기능
+    if(query) {
+      filtered = filtered.filter(item => item.name.toLowerCase().includes(query) || item.menu.toLowerCase().includes(query));
+    }
+    
+    // 3. 정렬 처리 (가본 곳의 별점순 토글)
+    if(currentFilter === 'visited') {
+      filtered.sort((a, b) => currentSortOrder === 'desc' ? b.rating - a.rating : a.rating - b.rating);
+    }
+    
+    if(filtered.length === 0) {
+      list.innerHTML = '<p style="text-align:center; color:var(--text-sub); margin-top:30px;">기록이 없습니다.</p>';
+      return;
+    }
+
+    filtered.forEach((item) => {
+      let stars = '★'.repeat(item.rating) + '☆'.repeat(5 - item.rating);
+      let metaLine = item.status === 'visited' 
+        ? `메뉴: ${item.menu} | <span class="rating-stars">${stars}</span> | 방문일: ${item.date}`
+        : `추천 메뉴: ${item.menu}`;
+        
+      let commentSection = item.status === 'visited' && item.comment
+        ? `<p style="font-size:14px; margin:10px 0; color:#333; white-space:pre-wrap;"><strong>평가:</strong> ${item.comment}</p>`
+        : '';
+        
+      // 다중 이미지 레이아웃 갤러리 구현
+      let galleryHtml = '';
+      if(item.images && item.images.length > 0) {
+        galleryHtml = '<div class="image-gallery">';
+        item.images.forEach(imgData => {
+          galleryHtml += `<img src="${imgData}" class="gallery-img">`;
+        });
+        galleryHtml += '</div>';
+      }
+      
+      // 개별 플랫폼 지도 앱 바로가기 링크 생성
+      let mapHtml = '';
+      if(item.maps && (item.maps.naver || item.maps.kakao || item.maps.google)) {
+        mapHtml = '<div class="map-links">';
+        if(item.maps.naver) mapHtml += `<a href="${item.maps.naver}" target="_blank" class="map-link naver">네이버 지도</a>`;
+        if(item.maps.kakao) mapHtml += `<a href="${item.maps.kakao}" target="_blank" class="map-link kakao">카카오맵</a>`;
+        if(item.maps.google) mapHtml += `<a href="${item.maps.google}" target="_blank" class="map-link google">구글 지도</a>`;
+        mapHtml += '</div>';
+      }
+
+      list.innerHTML += `
+        <div class="record-card">
+          <div class="card-header">
+            <h3>${item.name} <span class="address">📍 ${item.address}</span></h3>
+          </div>
+          <div class="card-meta">
+            ${metaLine}
+          </div>
+          ${commentSection}
+          ${galleryHtml}
+          ${mapHtml}
+          <div class="card-actions">
+            <button onclick="editItem(${item.originalIndex})">수정</button>
+            <button class="delete" onclick="deleteItem(${item.originalIndex})">삭제</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  function editItem(index) {
+    const item = records[index];
+    document.getElementById('editIndex').value = index;
+    document.getElementById('restaurantName').value = item.name;
+    document.getElementById('address').value = item.address;
+    document.getElementById('menu').value = item.menu;
+    document.getElementById('status').value = item.status;
+    
+    toggleFormByStatus();
+    
+    if(item.status === 'visited') {
+      document.getElementById('visitDate').value = item.date;
+      document.getElementById('rating').value = item.rating;
+      document.getElementById('comment').value = item.comment;
+    }
+    
+    document.getElementById('naverMap').value = item.maps?.naver || '';
+    document.getElementById('kakaoMap').value = item.maps?.kakao || '';
+    document.getElementById('googleMap').value = item.maps?.google || '';
+    
+    currentImages = item.images ? [...item.images] : [];
+    renderPreviews();
+    
+    document.getElementById('formTitle').innerText = "맛집 정보 수정";
+    showView('formView');
+  }
+
+  function deleteItem(index) {
+    if(confirm('정말 삭제하시겠습니까?')) {
+      records.splice(index, 1);
+      localStorage.setItem('foodieRecords', JSON.stringify(records));
+      renderList();
+    }
+  }
+
+  window.onload = () => {
+    renderList();
+    document.getElementById('visitDate').valueAsDate = new Date();
+  };
+</script>
+</body>
+</html>
