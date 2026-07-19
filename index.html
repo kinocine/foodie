@@ -13,14 +13,22 @@
       --text-sub: #86868b;
     }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); padding: 15px; margin: 0; }
-    .container { max-width: 500px; margin: 0 auto; }
+    .container { max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; min-height: 95vh; }
     .view { display: none; }
     .active { display: block; }
     
-    h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; text-align: center; color: var(--primary-color); }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 15px; text-align: center; color: var(--primary-color); }
     input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 10px; box-sizing: border-box; margin-bottom: 12px; font-size: 15px; background: #fff; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-color); }
     
+    /* 콤팩트 상단 컨트롤러 한 줄 정렬 라인 */
+    .top-control-bar { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; }
+    .top-search { flex: 2; margin-bottom: 0 !important; padding: 10px 8px !important; font-size: 14px; }
+    .top-add-btn { flex: 0.8; padding: 10px 4px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px; text-align: center; white-space: nowrap; }
+    .top-tabs { flex: 1.5; display: flex; gap: 4px; }
+    .top-tab-btn { flex: 1; padding: 10px 2px; background: #e5e5ea; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 12px; text-align: center; white-space: nowrap; }
+    .top-tab-btn.active { background: var(--primary-color); color: white; }
+
     /* 위치 및 지역 셀렉트 가로 정렬 */
     .location-row { display: flex; gap: 8px; margin-bottom: 0; }
     .location-row input { flex: 2; }
@@ -29,32 +37,31 @@
     .btn { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 15px; margin-top: 5px; transition: background 0.2s; }
     .btn:active { opacity: 0.9; }
     
-    .filter-tabs { display: flex; gap: 8px; margin-bottom: 10px; position: relative; }
-    .tab-btn { flex: 1; padding: 10px; background: #e5e5ea; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
-    .tab-btn.active { background: var(--primary-color); color: white; }
-    
     /* 지역 필터 활성화 시 나타나는 안내 바 */
-    .region-filter-indicator { display: none; background: #e5e5ea; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .region-filter-indicator { display: none; background: #e5e5ea; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .region-filter-indicator button { background: none; border: none; color: #ff3b30; font-weight: 700; cursor: pointer; font-size: 13px; }
 
-    .sort-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    /* 최하단으로 이동한 정렬 및 데이터 관리 바 */
+    .bottom-management-bar { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 20px; padding-bottom: 10px; }
     .sort-btn { padding: 6px 12px; background: #fff; border: 1px solid #d2d2d7; border-radius: 20px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    
-    /* 데이터 백업/복원 관리 존 */
-    .db-management { display: flex; align-items: center; gap: 8px; }
+    .db-management { display: flex; align-items: center; gap: 6px; }
     .db-btn { padding: 6px 10px; background: #8e8e93; color: white; border: none; border-radius: 20px; font-size: 12px; cursor: pointer; text-decoration: none; font-weight: 500; }
     .file-label { padding: 5px 10px; background: #636366; color: white; border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 500; }
 
     .record-card { background: var(--card-bg); padding: 18px; margin-bottom: 16px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5ea; }
     .card-header h3 { margin: 0 0 8px 0; font-size: 18px; font-weight: 700; display: flex; flex-direction: column; gap: 4px; }
-    .card-header .address { font-size: 13px; color: var(--text-sub); font-weight: normal; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .card-header .address-line { font-size: 13px; color: var(--text-sub); font-weight: normal; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; width: 100%; }
     
-    /* 클릭 가능한 지역 태그 스타일 변경 */
+    /* 발자국 및 태그 정렬 레이아웃 */
+    .card-header .header-meta-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .footprint-display { font-size: 13px; letter-spacing: -1px; }
+
     .card-header .region-tag { background-color: #ffeacc; color: var(--primary-color); font-weight: 600; font-size: 11px; padding: 2px 8px; border-radius: 6px; cursor: pointer; transition: background 0.2s; border: none; }
     .card-header .region-tag:hover { background-color: var(--primary-color); color: white; }
     
-    .card-meta { font-size: 14px; color: #333; margin-bottom: 10px; line-height: 1.5; border-bottom: 1px dashed #e5e5ea; padding-bottom: 10px; }
-    
+    .card-meta { font-size: 14px; color: #333; margin-bottom: 8px; line-height: 1.5; border-bottom: 1px dashed #e5e5ea; padding-bottom: 8px; }
+    .card-memo { font-size: 14px; color: #444; background: #f8f8fa; padding: 10px; border-radius: 8px; margin: 8px 0; white-space: pre-wrap; line-height: 1.4; border-left: 3px solid var(--primary-color); }
+
     .image-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
     .gallery-img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
     .gallery-img:hover { transform: scale(1.02); }
@@ -74,7 +81,6 @@
     .preview-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
     .preview-box .remove-btn { position: absolute; top: -4px; right: -4px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-    /* 이미지 확대를 위한 라이트박스 모달 스타일 */
     .lightbox-modal { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; cursor: zoom-out; }
     .lightbox-modal img { max-width: 95%; max-height: 90%; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
   </style>
@@ -86,24 +92,27 @@
   <div id="mainView" class="view active">
     <h1>맛집 탐방 <span style="font-size:16px; font-weight:normal; color:var(--text-sub);">foodie</span></h1>
     
-    <input type="text" id="searchInput" placeholder="🔍 식당, 위치 또는 메뉴 검색" oninput="renderList()">
-    
-    <button class="btn" onclick="showView('formView')" style="margin-bottom: 15px;">+ 새 맛집 추가</button>
-    
-    <!-- 가본 곳 / 가볼 곳 필터 탭 -->
-    <div class="filter-tabs">
-      <button id="tabVisited" class="tab-btn active" onclick="setFilter('visited')">가본 곳</button>
-      <button id="tabToVisit" class="tab-btn" onclick="setFilter('toVisit')">가볼 곳</button>
+    <!-- 극도로 압축된 한 줄 상단 제어 바 -->
+    <div class="top-control-bar">
+      <input type="text" id="searchInput" class="top-search" placeholder="🔍 식당, 위치, 메뉴 검색" oninput="renderList()">
+      <button class="top-add-btn" onclick="showView('formView')">+ 추가</button>
+      <div class="top-tabs">
+        <button id="tabVisited" class="top-tab-btn active" onclick="setFilter('visited')">🍚 간곳</button>
+        <button id="tabToVisit" class="top-tab-btn" onclick="setFilter('toVisit')">🥣 안간곳</button>
+      </div>
     </div>
 
-    <!-- 권역별 태그 필터가 작동 중일 때 나타나는 안내바 -->
+    <!-- 권역별 태그 필터 활성화 바 -->
     <div id="regionIndicator" class="region-filter-indicator">
-      <span>선택된 지역: <span id="selectedRegionName" style="color:var(--primary-color);"></span></span>
-      <button onclick="clearRegionFilter()">전체 지역 보기 ✕</button>
+      <span>지역: <span id="selectedRegionName" style="color:var(--primary-color);"></span></span>
+      <button onclick="clearRegionFilter()">전체보기 ✕</button>
     </div>
     
-    <!-- 정렬 및 데이터 관리 상단 바 -->
-    <div class="sort-container">
+    <!-- 메인 리스트 영역 -->
+    <div id="listContainer"></div>
+    
+    <!-- 맨 아래로 내려간 정렬 및 백업 관리자 바 -->
+    <div class="bottom-management-bar">
       <button class="sort-btn" onclick="toggleSort()">
         순서 <span id="sortDirection">▽</span>
       </button>
@@ -113,8 +122,6 @@
         <input type="file" id="restoreFile" accept=".json" onchange="restoreDB(this)" style="display:none;">
       </div>
     </div>
-    
-    <div id="listContainer"></div>
   </div>
 
   <!-- 입력/수정 폼 화면 -->
@@ -125,7 +132,6 @@
       
       <input type="text" id="restaurantName" placeholder="식당이름" required>
       
-      <!-- 위치 및 지역권 선택 결합 (평촌을 제일 앞으로 추가 배치) -->
       <div class="location-row">
         <input type="text" id="address" placeholder="위치 (예: 상암mbc몰)" required>
         <select id="region">
@@ -150,8 +156,16 @@
       
       <!-- '가본 곳' 선택 시 노출 영역 -->
       <div id="visitedFields">
-        <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">방문일자</label>
-        <input type="date" id="visitDate">
+        <div style="display: flex; gap: 10px;">
+          <div style="flex: 1;">
+            <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">방문일자</label>
+            <input type="date" id="visitDate">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">방문 횟수</label>
+            <input type="number" id="visitCount" min="1" value="1">
+          </div>
+        </div>
         
         <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">평가</label>
         <select id="commentSelect">
@@ -162,15 +176,19 @@
           <option value="절대비추">절대비추</option>
         </select>
       </div>
+
+      <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">사진 첨부 (다중 선택 가능)</label>
+      <input type="file" id="imageInput" accept="image/*" multiple onchange="processImages(this)">
+      <div id="previewGallery" class="preview-gallery"></div>
+
+      <!-- 자유 식당 리뷰 작성을 위한 메모 작성란 추가 -->
+      <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">메모 (식당 리뷰/기록)</label>
+      <textarea id="memoInput" placeholder="맛의 특징, 주차 정보 등 자유로운 이야기를 기록하세요." rows="4"></textarea>
       
       <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">지도 앱 링크 (선택)</label>
       <input type="url" id="naverMap" placeholder="네이버 지도 공유 링크">
       <input type="url" id="kakaoMap" placeholder="카카오맵 공유 링크">
       <input type="url" id="googleMap" placeholder="구글 지도 공유 링크">
-      
-      <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">사진 첨부 (다중 선택 가능)</label>
-      <input type="file" id="imageInput" accept="image/*" multiple onchange="processImages(this)">
-      <div id="previewGallery" class="preview-gallery"></div>
       
       <button type="submit" class="btn">저장</button>
       <button type="button" class="btn" style="background:#8e8e93" onclick="showView('mainView')">취소</button>
@@ -188,7 +206,7 @@
   let currentImages = [];
   let currentFilter = 'visited'; 
   let currentSortOrder = 'desc'; 
-  let selectedRegion = ''; // 현재 필터링 선택된 지역 저장 변수
+  let selectedRegion = ''; 
 
   function showView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -200,6 +218,7 @@
       currentImages = [];
       document.getElementById('formTitle').innerText = "새 맛집 기록";
       document.getElementById('visitDate').valueAsDate = new Date();
+      document.getElementById('visitCount').value = 1;
       toggleFormByStatus();
     }
   }
@@ -239,33 +258,26 @@
     renderList();
   }
 
-  // 라이트박스 전용 팝업 뒤로가기 제어 감지 기능 포함 열기
   function openLightbox(src) {
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
     lightboxImg.src = src;
     lightbox.style.display = 'flex';
-    
-    // 뒤로가기 제어를 위해 브라우저 가상 히스토리 상태를 하나 push합니다.
     window.history.pushState({ lightbox: "open" }, "");
   }
 
-  // 라이트박스 닫기 (이벤트 및 수동)
   function closeLightbox() {
     const lightbox = document.getElementById('lightbox');
     if (lightbox.style.display === 'flex') {
       lightbox.style.display = 'none';
-      // 만약 사용자가 화면 내 클릭으로 직접 닫았다면 쌓인 뒤로가기 state를 맞춤 제거합니다.
       if (window.history.state && window.history.state.lightbox === "open") {
         window.history.back();
       }
     }
   }
 
-  // 사용자가 기기 '뒤로가기' 버튼을 눌렀을 때의 브라우저 이벤트 감지 처리
   window.onpopstate = function(event) {
     const lightbox = document.getElementById('lightbox');
-    // 모달창이 켜진 상태에서 뒤로가기가 발생한 것이라면, 페이지 이동을 막고 모달만 숨김 처리합니다.
     if (lightbox.style.display === 'flex') {
       lightbox.style.display = 'none';
     }
@@ -376,7 +388,9 @@
       menu: document.getElementById('menu').value,
       status: status,
       date: status === 'visited' ? document.getElementById('visitDate').value : '',
+      visitCount: status === 'visited' ? (parseInt(document.getElementById('visitCount').value) || 1) : 0,
       comment: status === 'visited' ? document.getElementById('commentSelect').value : '',
+      memo: document.getElementById('memoInput').value,
       maps: {
         naver: document.getElementById('naverMap').value,
         kakao: document.getElementById('kakaoMap').value,
@@ -414,6 +428,7 @@
         item.name.toLowerCase().includes(query) || 
         item.menu.toLowerCase().includes(query) ||
         item.address.toLowerCase().includes(query) ||
+        (item.memo && item.memo.toLowerCase().includes(query)) ||
         (item.region && item.region.toLowerCase().includes(query))
       );
     }
@@ -434,6 +449,10 @@
     filtered.forEach((item) => {
       let regionText = item.region ? item.region : '미지정';
       
+      // 방문횟수 값을 가져와서 발자국 이모지화 처리 (가볼 곳은 표시 X)
+      let count = item.visitCount || 1;
+      let footprintHtml = item.status === 'visited' ? `<span class="footprint-display" title="방문 횟수: ${count}회">${'👣'.repeat(count)}</span>` : '';
+
       let metaLine = item.status === 'visited' 
         ? `<strong>평가:</strong> <span style="color:var(--primary-color); font-weight:700;">${item.comment || '평범'}</span> | <strong>방문일:</strong> ${item.date}`
         : `가볼 곳 예약`;
@@ -446,6 +465,9 @@
         });
         galleryHtml += '</div>';
       }
+
+      // 메모 기입 영역 레이아웃 조건 생성
+      let memoHtml = item.memo ? `<div class="card-memo">${item.memo}</div>` : '';
       
       let mapHtml = '';
       if(item.maps && (item.maps.naver || item.maps.kakao || item.maps.google)) {
@@ -460,8 +482,11 @@
         <div class="record-card">
           <div class="card-header">
             <h3>${item.name} 
-              <span class="address">📍 ${item.address} 
-                <button class="region-tag" onclick="filterByRegion('${regionText}')">[${regionText}]</button>
+              <span class="address-line">📍 ${item.address} 
+                <span class="header-meta-right">
+                  ${footprintHtml}
+                  <button class="region-tag" onclick="filterByRegion('${regionText}')">[${regionText}]</button>
+                </span>
               </span>
             </h3>
           </div>
@@ -470,6 +495,7 @@
             <span style="display:inline-block; margin-top:6px;"><strong>메뉴:</strong> ${item.menu}</span>
           </div>
           ${galleryHtml}
+          ${memoHtml}
           ${mapHtml}
           <div class="card-actions">
             <button onclick="editItem(${item.originalIndex})">수정</button>
@@ -488,11 +514,13 @@
     document.getElementById('region').value = item.region || '평촌';
     document.getElementById('menu').value = item.menu;
     document.getElementById('status').value = item.status;
+    document.getElementById('memoInput').value = item.memo || '';
     
     toggleFormByStatus();
     
     if(item.status === 'visited') {
       document.getElementById('visitDate').value = item.date;
+      document.getElementById('visitCount').value = item.visitCount || 1;
       document.getElementById('commentSelect').value = item.comment || '평범';
     }
     
