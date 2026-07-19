@@ -29,10 +29,14 @@
     .btn { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 15px; margin-top: 5px; transition: background 0.2s; }
     .btn:active { opacity: 0.9; }
     
-    .filter-tabs { display: flex; gap: 8px; margin-bottom: 15px; }
+    .filter-tabs { display: flex; gap: 8px; margin-bottom: 10px; position: relative; }
     .tab-btn { flex: 1; padding: 10px; background: #e5e5ea; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
     .tab-btn.active { background: var(--primary-color); color: white; }
     
+    /* 지역 필터 활성화 시 나타나는 안내 바 */
+    .region-filter-indicator { display: none; background: #e5e5ea; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .region-filter-indicator button { background: none; border: none; color: #ff3b30; font-weight: 700; cursor: pointer; font-size: 13px; }
+
     .sort-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .sort-btn { padding: 6px 12px; background: #fff; border: 1px solid #d2d2d7; border-radius: 20px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
     
@@ -42,12 +46,14 @@
     .file-label { padding: 5px 10px; background: #636366; color: white; border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 500; }
 
     .record-card { background: var(--card-bg); padding: 18px; margin-bottom: 16px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5ea; }
-    .card-header h3 { margin: 0 0 8px 0; font-size: 18px; font-weight: 700; }
-    .card-header .address { font-size: 13px; color: var(--text-sub); font-weight: normal; display: block; margin-top: 4px; }
-    .card-header .region-tag { color: var(--primary-color); font-weight: 600; }
+    .card-header h3 { margin: 0 0 8px 0; font-size: 18px; font-weight: 700; display: flex; flex-direction: column; gap: 4px; }
+    .card-header .address { font-size: 13px; color: var(--text-sub); font-weight: normal; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    
+    /* 클릭 가능한 지역 태그 스타일 변경 */
+    .card-header .region-tag { background-color: #ffeacc; color: var(--primary-color); font-weight: 600; font-size: 11px; padding: 2px 8px; border-radius: 6px; cursor: pointer; transition: background 0.2s; border: none; }
+    .card-header .region-tag:hover { background-color: var(--primary-color); color: white; }
     
     .card-meta { font-size: 14px; color: #333; margin-bottom: 10px; line-height: 1.5; border-bottom: 1px dashed #e5e5ea; padding-bottom: 10px; }
-    .rating-stars { color: #ffcc00; font-weight: bold; }
     
     .image-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
     .gallery-img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
@@ -89,11 +95,17 @@
       <button id="tabVisited" class="tab-btn active" onclick="setFilter('visited')">가본 곳</button>
       <button id="tabToVisit" class="tab-btn" onclick="setFilter('toVisit')">가볼 곳</button>
     </div>
+
+    <!-- 권역별 태그 필터가 작동 중일 때 나타나는 안내바 -->
+    <div id="regionIndicator" class="region-filter-indicator">
+      <span>선택된 지역: <span id="selectedRegionName" style="color:var(--primary-color);"></span></span>
+      <button onclick="clearRegionFilter()">전체 지역 보기 ✕</button>
+    </div>
     
     <!-- 정렬 및 데이터 관리 상단 바 -->
     <div class="sort-container">
       <button class="sort-btn" onclick="toggleSort()">
-        별점순 <span id="sortDirection">▽</span>
+        순서 <span id="sortDirection">▽</span>
       </button>
       <div class="db-management">
         <button class="db-btn" onclick="downloadDB()">DB 백업</button>
@@ -135,16 +147,9 @@
         <option value="toVisit">가볼 곳</option>
       </select>
       
-      <!-- '가본 곳' 선택 시 노출 영역 -->
+      <!-- '가본 곳' 선택 시 노출 영역 (기존의 별점 평점 드롭다운 삭제 완료) -->
       <div id="visitedFields">
-        <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">별점 및 방문일자</label>
-        <select id="rating" style="margin-bottom:12px;">
-          <option value="5">★★★★★ (5점)</option>
-          <option value="4">★★★★☆ (4점)</option>
-          <option value="3">★★★☆☆ (3점)</option>
-          <option value="2">★★☆☆☆ (2점)</option>
-          <option value="1">★☆☆☆☆ (1점)</option>
-        </select>
+        <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">방문일자</label>
         <input type="date" id="visitDate">
         
         <label style="font-size:14px; font-weight:600; margin-bottom:4px; display:block;">평가</label>
@@ -182,6 +187,7 @@
   let currentImages = [];
   let currentFilter = 'visited'; 
   let currentSortOrder = 'desc'; 
+  let selectedRegion = ''; // 현재 필터링 선택된 지역 저장 변수
 
   function showView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -210,13 +216,30 @@
     renderList();
   }
 
+  // 특정 지역권 태그를 눌렀을 때 실행되는 필터링 제어 함수
+  function filterByRegion(regionName) {
+    selectedRegion = regionName;
+    const indicator = document.getElementById('regionIndicator');
+    const nameSpan = document.getElementById('selectedRegionName');
+    
+    nameSpan.innerText = regionName;
+    indicator.style.display = 'flex';
+    renderList();
+  }
+
+  // 지역 필터를 풀고 전체 리스트로 복귀하는 함수
+  function clearRegionFilter() {
+    selectedRegion = '';
+    document.getElementById('regionIndicator').style.display = 'none';
+    renderList();
+  }
+
   function toggleSort() {
     currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
     document.getElementById('sortDirection').innerText = currentSortOrder === 'desc' ? '▽' : '△';
     renderList();
   }
 
-  // 이미지 팝업 열기 / 닫기 함수
   function openLightbox(src) {
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
@@ -224,11 +247,16 @@
     lightbox.style.display = 'flex';
   }
 
+  document.getElementById('lightbox').onclick = function(e) {
+    if(e.target.id === 'lightbox' || e.target.id === 'lightboxImg') {
+      this.style.display = 'none';
+    }
+  };
+
   function closeLightbox() {
     document.getElementById('lightbox').style.display = 'none';
   }
 
-  // 데이터 백업 기능 (파일 다운로드)
   function downloadDB() {
     if(records.length === 0) {
       alert('백업할 데이터가 없습니다.');
@@ -245,7 +273,6 @@
     URL.revokeObjectURL(url);
   }
 
-  // 데이터 복원 기능 (파일 읽어서 기기에 저장하기)
   function restoreDB(input) {
     const file = input.files[0];
     if (!file) return;
@@ -258,6 +285,7 @@
           if(confirm('기존의 맛집 데이터를 덮어쓰고 파일의 데이터로 복원하시겠습니까?')) {
             records = importedData;
             localStorage.setItem('foodieRecords', JSON.stringify(records));
+            clearRegionFilter();
             renderList();
             alert('성공적으로 데이터를 복원했습니다.');
           }
@@ -328,7 +356,6 @@
       menu: document.getElementById('menu').value,
       status: status,
       date: status === 'visited' ? document.getElementById('visitDate').value : '',
-      rating: status === 'visited' ? parseInt(document.getElementById('rating').value) : 0,
       comment: status === 'visited' ? document.getElementById('commentSelect').value : '',
       maps: {
         naver: document.getElementById('naverMap').value,
@@ -356,8 +383,15 @@
     
     let indexedRecords = records.map((item, originalIndex) => ({ ...item, originalIndex }));
     
+    // 1. 상태 필터링 (가본 곳 / 가볼 곳)
     let filtered = indexedRecords.filter(item => item.status === currentFilter);
     
+    // 2. 권역별 태그 필터링 조건 추가 (태그를 누른 이력이 있을 때 작동)
+    if(selectedRegion) {
+      filtered = filtered.filter(item => item.region === selectedRegion);
+    }
+
+    // 3. 통합 검색 처리
     if(query) {
       filtered = filtered.filter(item => 
         item.name.toLowerCase().includes(query) || 
@@ -367,9 +401,14 @@
       );
     }
     
-    if(currentFilter === 'visited') {
-      filtered.sort((a, b) => currentSortOrder === 'desc' ? b.rating - a.rating : a.rating - b.rating);
-    }
+    // 4. 최신/과거 날짜 기준 혹은 가나다 정렬 (요구 사항에 따른 배열 배치 순서 스위칭)
+    filtered.sort((a, b) => {
+      if(currentFilter === 'visited') {
+        return currentSortOrder === 'desc' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date);
+      } else {
+        return currentSortOrder === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name);
+      }
+    });
     
     if(filtered.length === 0) {
       list.innerHTML = '<p style="text-align:center; color:var(--text-sub); margin-top:30px;">기록이 없습니다.</p>';
@@ -377,22 +416,17 @@
     }
 
     filtered.forEach((item) => {
-      let stars = '★'.repeat(item.rating) + '☆'.repeat(5 - item.rating);
-      let regionInfo = item.region ? ` [${item.region}]` : '';
+      let regionText = item.region ? item.region : '미지정';
       
+      // 메타 구조 변경: 별점을 빼고 방문 일자 및 평가 정보를 깔끔하게 결합
       let metaLine = item.status === 'visited' 
-        ? `<span class="rating-stars">${stars}</span> | 방문일: ${item.date}`
+        ? `<strong>평가:</strong> <span style="color:var(--primary-color); font-weight:700;">${item.comment || '평범'}</span> | <strong>방문일:</strong> ${item.date}`
         : `가볼 곳 예약`;
-        
-      let commentSection = item.status === 'visited' && item.comment
-        ? `<p style="font-size:14px; margin:10px 0; color:#333;"><strong>평가:</strong> ${item.comment}</p>`
-        : '';
         
       let galleryHtml = '';
       if(item.images && item.images.length > 0) {
         galleryHtml = '<div class="image-gallery">';
         item.images.forEach(imgData => {
-          // 클릭 이벤트를 추가하여 크게 볼 수 있도록 유도
           galleryHtml += `<img src="${imgData}" class="gallery-img" onclick="openLightbox('${imgData}')">`;
         });
         galleryHtml += '</div>';
@@ -407,16 +441,20 @@
         mapHtml += '</div>';
       }
 
+      // 📍 위치 옆에 [권역 태그]를 버튼 스타일로 감싸서 클릭하면 filterByRegion() 함수가 구동되도록 설계
       list.innerHTML += `
         <div class="record-card">
           <div class="card-header">
-            <h3>${item.name} <span class="address">📍 ${item.address}<span class="region-tag">${regionInfo}</span></span></h3>
+            <h3>${item.name} 
+              <span class="address">📍 ${item.address} 
+                <button class="region-tag" onclick="filterByRegion('${regionText}')">[${regionText}]</button>
+              </span>
+            </h3>
           </div>
           <div class="card-meta">
             ${metaLine}<br>
-            <span style="display:inline-block; margin-top:4px;"><strong>메뉴:</strong> ${item.menu}</span>
+            <span style="display:inline-block; margin-top:6px;"><strong>메뉴:</strong> ${item.menu}</span>
           </div>
-          ${commentSection}
           ${galleryHtml}
           ${mapHtml}
           <div class="card-actions">
@@ -441,7 +479,6 @@
     
     if(item.status === 'visited') {
       document.getElementById('visitDate').value = item.date;
-      document.getElementById('rating').value = item.rating;
       document.getElementById('commentSelect').value = item.comment || '평범';
     }
     
